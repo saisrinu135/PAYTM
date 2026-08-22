@@ -11,6 +11,7 @@ Run:  python -m scripts.fetch_models
 
 from __future__ import annotations
 
+import os
 import sys
 import urllib.error
 import urllib.request
@@ -35,6 +36,18 @@ DEST = Path(__file__).resolve().parent.parent / "models"
 
 def fetch(name: str, url: str) -> bool:
     target = DEST / name
+    # docker-compose mounts ./models read-only, because the app only ever reads
+    # these. Downloading belongs on the host, where the volume is writable.
+    if not os.access(DEST, os.W_OK):
+        print(
+            f"  {name}: {DEST} is read-only.\n"
+            "      Run this on the HOST, not inside the container:\n"
+            "        python -m scripts.fetch_models\n"
+            "      docker-compose mounts ./models :ro on purpose -- the app only\n"
+            "      reads these, so the container never needs write access.",
+            file=sys.stderr,
+        )
+        return False
     if target.exists() and target.stat().st_size > 0:
         print(f"  {name}: already present ({target.stat().st_size:,} bytes)")
         return True

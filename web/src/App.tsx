@@ -1,6 +1,7 @@
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import { RequireAuth } from "./RequireAuth";
 import { Shell } from "./Shell";
+import { Chat } from "./pages/Chat";
 import { Customers } from "./pages/Customers";
 import { CustomerKhata } from "./pages/CustomerKhata";
 import { Home } from "./pages/Home";
@@ -19,7 +20,8 @@ export function App() {
         />
         <Route element={<RequireAuth />}>
           <Route element={<Shell />}>
-            <Route path="/" element={<Home />} />
+            <Route path="/" element={<Chat />} />
+            <Route path="/home" element={<Home />} />
             <Route path="/khata" element={<KhataList />} />
             <Route path="/khata/:mobile" element={<CustomerKhata />} />
             <Route path="/customers" element={<Customers />} />

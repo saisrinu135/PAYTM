@@ -30,7 +30,8 @@ export function Shell() {
         <Outlet />
       </main>
       <nav className="nav">
-        <NavLink to="/" end className={({ isActive }) => (isActive ? "active" : "")}>Home</NavLink>
+        <NavLink to="/" end className={({ isActive }) => (isActive ? "active" : "")}>Chat</NavLink>
+        <NavLink to="/home" className={({ isActive }) => (isActive ? "active" : "")}>Home</NavLink>
         <NavLink to="/khata" className={({ isActive }) => (isActive ? "active" : "")}>Khata</NavLink>
         <NavLink to="/customers" className={({ isActive }) => (isActive ? "active" : "")}>Customers</NavLink>
         <NavLink to="/insights" className={({ isActive }) => (isActive ? "active" : "")}>Insights</NavLink>

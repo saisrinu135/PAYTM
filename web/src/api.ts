@@ -1,5 +1,6 @@
 const TOKEN_KEY = "vaani_token";
 const STORE_KEY = "vaani_store";
+const API_BASE = (import.meta.env.VITE_API_URL ?? "http://localhost:8000")
 
 export type Store = {
   id: string;
@@ -71,7 +72,7 @@ export async function api<T>(
     if (!token) throw new ApiError(401, { detail: "Not signed in." });
     headers.set("Authorization", `Bearer ${token}`);
   }
-  const res = await fetch(path, { ...init, headers });
+  const res = await fetch(`${API_BASE}${path}`, { ...init, headers });
   const body = await parse(res);
   if (!res.ok) {
     throw new ApiError(res.status, body);
@@ -81,4 +82,25 @@ export async function api<T>(
 
 export function requestId(prefix: string): string {
   return `${prefix}-${crypto.randomUUID()}`;
+}
+
+export type AgentReply = {
+  reply: string;
+  conversation_id: string;
+  language: string;
+  tools_used: string[];
+  hops: number;
+  truncated: boolean;
+};
+
+export function sendToAgent(
+  text: string,
+  conversationId?: string,
+): Promise<AgentReply> {
+  return api<AgentReply>("/v1/agent/text", {
+    method: "POST",
+    body: JSON.stringify(
+      conversationId ? { text, conversation_id: conversationId } : { text },
+    ),
+  });
 }

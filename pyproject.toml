@@ -19,5 +19,11 @@ ignore = [
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
+# One event loop for the whole session. The engine's connection pool binds to
+# the loop that created it, so per-test loops (the pytest-asyncio 1.x default)
+# hand later tests connections belonging to a closed loop -- which surfaces as
+# an unrelated-looking AttributeError, and only when tests run together.
+asyncio_default_fixture_loop_scope = "session"
+asyncio_default_test_loop_scope = "session"
 testpaths = ["tests"]
 filterwarnings = ["error::DeprecationWarning"]

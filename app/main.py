@@ -14,7 +14,7 @@ from app import middleware
 from app.config import get_settings
 from app.db import dispose_engine, get_sessionmaker, init_engine
 from app.log import configure_logging
-from app.routers import auth, insights, khata, stores
+from app.routers import agent, auth, insights, khata, stores
 from app.services import notify
 
 log = logging.getLogger(__name__)
@@ -79,6 +79,7 @@ def create_app() -> FastAPI:
     app.include_router(stores.router)
     app.include_router(khata.router)
     app.include_router(insights.router)
+    app.include_router(agent.router)
 
     return app
 

@@ -68,7 +68,7 @@ textarea { min-height: 72px; resize: vertical; }
 .content { flex: 1; padding: 16px; max-width: 980px; width: 100%; margin: 0 auto; }
 .nav {
   position: sticky; bottom: 0; background: #fff; border-top: 1px solid #e6eef5;
-  display: grid; grid-template-columns: repeat(4, 1fr); padding: 6px 4px env(safe-area-inset-bottom);
+  display: grid; grid-template-columns: repeat(5, 1fr); padding: 6px 4px env(safe-area-inset-bottom);
 }
 .nav a {
   text-decoration: none; color: var(--muted); text-align: center; padding: 8px 4px;
@@ -95,3 +95,10 @@ textarea { min-height: 72px; resize: vertical; }
 .table td { padding: 8px 4px; border-top: 1px solid #eef3f7; }
 .form-actions { display: flex; gap: 8px; margin-top: 12px; }
 .form-actions .btn { width: auto; margin: 0; flex: 1; }
+.chat-log { min-height: 240px; margin-bottom: 12px; }
+.chat-turn { margin: 0 0 14px; }
+.chat-turn p { margin: 4px 0 0; }
+.chat-turn.agent { padding-left: 8px; border-left: 3px solid var(--paytm-blue); }
+.chat-form { display: flex; gap: 8px; }
+.chat-form input { flex: 1; }
+.chat-form .btn { width: auto; margin: 0; }
