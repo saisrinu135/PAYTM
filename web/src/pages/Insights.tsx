@@ -2,18 +2,18 @@ import { useEffect, useState } from "react";
 import { ApiError, api } from "../api";
 
 const PERIODS = [
-  "today",
-  "yesterday",
-  "this_week",
-  "last_week",
-  "this_month",
-  "last_month",
-  "this_year",
-  "last_7_days",
-  "last_30_days",
+  ["today", "Today"],
+  ["yesterday", "Yesterday"],
+  ["this_week", "This week"],
+  ["last_week", "Last week"],
+  ["this_month", "This month"],
+  ["last_month", "Last month"],
+  ["this_year", "This year"],
+  ["last_7_days", "7 days"],
+  ["last_30_days", "30 days"],
 ] as const;
 
-type Period = (typeof PERIODS)[number];
+type Period = (typeof PERIODS)[number][0];
 
 export function Insights() {
   const [period, setPeriod] = useState<Period>("this_month");
@@ -59,49 +59,60 @@ export function Insights() {
     customers?: { name: string; mobile: string | null; total: string; count: number }[];
   } | undefined;
 
+  const deltaNum = Number(compare?.delta ?? 0);
+
   return (
     <div>
       <h2 className="page-title">Insights</h2>
-      <div className="toolbar">
-        <select value={period} onChange={(e) => setPeriod(e.target.value as Period)}>
-          {PERIODS.map((p) => (
-            <option key={p} value={p}>{p.replaceAll("_", " ")}</option>
-          ))}
-        </select>
+      <div className="chips">
+        {PERIODS.map(([id, label]) => (
+          <button
+            key={id}
+            type="button"
+            className={period === id ? "chip on" : "chip"}
+            onClick={() => setPeriod(id)}
+          >
+            {label}
+          </button>
+        ))}
       </div>
       {err ? <div className="error">{err}</div> : null}
-      <div className="grid grid-2">
-        <div className="card metric">
-          <div className="label">Sales</div>
-          <div className="value">₹{total?.total ?? "—"}</div>
-          <div className="muted">{total?.count ?? 0} bills</div>
-        </div>
-        <div className="card metric">
-          <div className="label">vs previous window</div>
-          <div className="value">₹{compare?.delta ?? "—"}</div>
-          <div className="muted">prior ₹{compare?.prior?.total ?? "—"}</div>
+
+      <div className="wallet" style={{ marginBottom: 16 }}>
+        <div className="kicker">Sales</div>
+        <div className="amt">₹{total?.total ?? "—"}</div>
+        <div className="sub">{total?.count ?? 0} bills</div>
+        <div className="wallet-split">
+          <div>
+            <div className="lbl">vs last window</div>
+            <div className="n">{deltaNum >= 0 ? "+" : ""}₹{compare?.delta ?? "—"}</div>
+          </div>
+          <div>
+            <div className="lbl">Prior</div>
+            <div className="n">₹{compare?.prior?.total ?? "—"}</div>
+          </div>
         </div>
       </div>
 
-      <h3 style={{ color: "var(--paytm-navy)" }}>Payment mix</h3>
+      <div className="section-h">Payment mix</div>
       <div className="card">
         <table className="table">
           <thead>
-            <tr><th>Mode</th><th>Count</th><th>Total</th></tr>
+            <tr><th>Mode</th><th>Bills</th><th>Total</th></tr>
           </thead>
           <tbody>
             {Object.entries(mix?.mix ?? {}).map(([mode, v]) => (
               <tr key={mode}>
-                <td>{mode}</td>
+                <td style={{ textTransform: "uppercase", fontWeight: 600 }}>{mode}</td>
                 <td>{v.count}</td>
-                <td>₹{v.total}</td>
+                <td className="rupee">₹{v.total}</td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
 
-      <h3 style={{ color: "var(--paytm-navy)" }}>Top items</h3>
+      <div className="section-h">Top items</div>
       <div className="card">
         <table className="table">
           <thead>
@@ -112,14 +123,14 @@ export function Insights() {
               <tr key={it.item}>
                 <td>{it.item}</td>
                 <td>{it.qty}</td>
-                <td>₹{it.total}</td>
+                <td className="rupee">₹{it.total}</td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
 
-      <h3 style={{ color: "var(--paytm-navy)" }}>By day</h3>
+      <div className="section-h">By day</div>
       <div className="card">
         <table className="table">
           <thead>
@@ -130,22 +141,22 @@ export function Insights() {
               <tr key={d.on}>
                 <td>{d.on}</td>
                 <td>{d.count}</td>
-                <td>₹{d.total}</td>
+                <td className="rupee">₹{d.total}</td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
 
-      <h3 style={{ color: "var(--paytm-navy)" }}>Top customers</h3>
+      <div className="section-h">Top customers</div>
       <div className="card">
         {(customers?.customers ?? []).map((c) => (
           <div className="row" key={`${c.name}-${c.mobile}`}>
             <div>
               <strong>{c.name}</strong>
-              <div className="muted">{c.mobile ?? "walk-in"}</div>
+              <div className="muted">{c.mobile ?? "walk-in"} · {c.count} bills</div>
             </div>
-            <div>₹{c.total}</div>
+            <div className="rupee">₹{c.total}</div>
           </div>
         ))}
       </div>

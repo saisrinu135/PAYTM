@@ -16,7 +16,7 @@ export function App() {
       <Routes>
         <Route
           path="/login"
-          element={getToken() ? <Navigate to="/" replace /> : <Login />}
+          element={getToken() ? <Navigate to="/home" replace /> : <Login />}
         />
         <Route element={<RequireAuth />}>
           <Route element={<Shell />}>
