@@ -33,6 +33,12 @@ const Icon = {
       <path d="M8 16v-5M12 16V8M16 16v-8" />
     </svg>
   ),
+  translate: (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <path d="M5 8h8M9 8c0 6-4 8-4 8M13 8c-.5 3-2 5-4 6" />
+      <path d="M14 15l3 6 3-6M15.2 17.5h3.6" />
+    </svg>
+  ),
 };
 
 export function Shell() {
@@ -71,6 +77,9 @@ export function Shell() {
       <nav className="nav">
         <NavLink to="/" end className={({ isActive }) => (isActive ? "active" : "")}>
           {Icon.chat}Chat
+        </NavLink>
+        <NavLink to="/translate" className={({ isActive }) => (isActive ? "active" : "")}>
+          {Icon.translate}Translate
         </NavLink>
         <NavLink to="/home" className={({ isActive }) => (isActive ? "active" : "")}>
           {Icon.home}Home

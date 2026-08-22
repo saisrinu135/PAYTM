@@ -48,13 +48,14 @@ class Settings(BaseSettings):
     sarvam_base_url: str = "https://api.sarvam.ai"
     # REST STT. saarika:v2.5 was retired; current default is saaras:v3.
     sarvam_stt_model: str = "saaras:v3"
+    sarvam_translate_model: str = "mayura:v1"
 
     # ---- voice ----------------------------------------------------------
     audio_dir: Path = Path("./media")
     models_dir: Path = Path("./models")
     ffmpeg_bin: str = "ffmpeg"
     wake_word: str = "sathi"
-    vad_silence_ms: int = 600
+    vad_silence_ms: int = 1000
     speaker_threshold_default: float = 0.70
 
     # ---- email ----------------------------------------------------------

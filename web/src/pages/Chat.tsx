@@ -5,10 +5,24 @@ import { useMic } from "../useMic";
 
 export function Chat() {
   const { turns, send, reset, busy, error } = useAgent();
-  const { recording, start, stop } = useMic();
   const [draft, setDraft] = useState("");
   const [micErr, setMicErr] = useState("");
   const store = getStore();
+  const { phase, start, stop } = useMic((blob) => {
+    void (async () => {
+      setMicErr("");
+      try {
+        const t = await transcribeAudio(blob);
+        if (!t.transcript) {
+          setMicErr("Heard nothing. Try again.");
+          return;
+        }
+        await send(t.transcript);
+      } catch (ex) {
+        setMicErr(ex instanceof ApiError ? ex.message : "Could not transcribe");
+      }
+    })();
+  });
 
   function onSubmit(e: FormEvent) {
     e.preventDefault();
@@ -21,7 +35,7 @@ export function Chat() {
   async function onMic() {
     if (busy) return;
     setMicErr("");
-    if (!recording) {
+    if (phase === "idle") {
       try {
         await start();
       } catch {
@@ -29,17 +43,7 @@ export function Chat() {
       }
       return;
     }
-    const blob = await stop();
-    try {
-      const t = await transcribeAudio(blob);
-      if (!t.transcript) {
-        setMicErr("Heard nothing. Try again.");
-        return;
-      }
-      await send(t.transcript);
-    } catch (ex) {
-      setMicErr(ex instanceof ApiError ? ex.message : "Could not transcribe");
-    }
+    stop();
   }
 
   async function speak(text: string) {
@@ -61,7 +65,7 @@ export function Chat() {
       <div className="card chat-log">
         {turns.length === 0 ? (
           <p className="muted">
-            Type, or tap Mic. Try: ramesh ka kitna baaki hai?
+            Type, or tap Mic and speak — it stops when you go quiet.
           </p>
         ) : (
           turns.map((t, i) => (
@@ -88,12 +92,12 @@ export function Chat() {
       {micErr ? <div className="error">{micErr}</div> : null}
       <form className="chat-form" onSubmit={onSubmit}>
         <button
-          className={`btn ${recording ? "btn-danger" : "btn-navy"}`}
+          className={`btn ${phase !== "idle" ? "btn-danger" : "btn-navy"}`}
           type="button"
           disabled={busy}
           onClick={onMic}
         >
-          {recording ? "Stop" : "Mic"}
+          {phase === "idle" ? "Mic" : phase === "listening" ? "Listening…" : "Stop"}
         </button>
         <input
           value={draft}

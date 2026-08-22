@@ -109,7 +109,7 @@ a { color: inherit; }
   position: sticky; bottom: 0;
   background: #fff;
   border-top: 1px solid var(--line);
-  display: grid; grid-template-columns: repeat(5, 1fr);
+  display: grid; grid-template-columns: repeat(6, 1fr);
   padding: 6px 0 max(8px, env(safe-area-inset-bottom));
   max-width: 480px; width: 100%; margin: 0 auto;
 }
@@ -242,5 +242,5 @@ input:focus, select:focus, textarea:focus {
 
 @media (min-width: 720px) {
   .nav, .content { max-width: 720px; }
-  .nav { grid-template-columns: repeat(5, 1fr); }
+  .nav { grid-template-columns: repeat(6, 1fr); }
 }
