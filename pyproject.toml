@@ -1,0 +1,23 @@
+# Tooling config only. This project is an application, not a package --
+# there is no [build-system] and nothing here installs anything.
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "ASYNC", "DTZ", "RUF"]
+# DTZ is deliberate: it flags naive datetime.now()/utcnow(). Every timestamp in
+# this app is timezone-aware because "today's sales" depends on it.
+ignore = [
+    "E501",  # line length is handled by the formatter
+    "B008",  # Depends()/Query() in defaults is the FastAPI idiom
+]
+
+[tool.ruff.lint.per-file-ignores]
+"alembic/versions/*" = ["E", "F", "I"]   # generated files
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+filterwarnings = ["error::DeprecationWarning"]

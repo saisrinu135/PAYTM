@@ -1,0 +1,40 @@
+# Direct dependencies only. Keep this file human-readable; pin the full
+# resolved tree into requirements.lock.txt when you need reproducible builds.
+#
+# This file MUST stay UTF-8. PowerShell `>` and Set-Content default to UTF-16
+# on this machine and pip rejects the result with "Expected package name at
+# the start of dependency specifier". Use `Out-File -Encoding utf8`.
+
+# ---- server -------------------------------------------------------------
+fastapi==0.141.1
+uvicorn[standard]
+python-multipart
+
+# ---- time zones ---------------------------------------------------------
+# Required, not optional. Windows ships no system tz database and slim Linux
+# images may not either, so ZoneInfo("Asia/Kolkata") raises without this.
+# Every analytics period boundary is computed in the store's timezone, so
+# losing this breaks "today's sales" rather than degrading it.
+tzdata
+
+# ---- database -----------------------------------------------------------
+SQLAlchemy[asyncio]==2.0.52
+asyncpg==0.31.0
+alembic
+pydantic==2.13.4
+pydantic-settings
+
+# ---- LLM + vendor HTTP --------------------------------------------------
+openai                  # brings httpx2, which we reuse for the Sarvam REST calls
+                        # (openai 3.x is built on httpx2, NOT httpx -- import
+                        #  httpx2 in services/sarvam.py, not httpx)
+
+# ---- audio --------------------------------------------------------------
+onnxruntime             # runs silero_vad.onnx + ecapa.onnx (no torch)
+numpy
+
+# ---- vectors ------------------------------------------------------------
+# SQLAlchemy Vector() type + the <=> distance operators. The SERVER-side
+# extension is a separate concern: postgres:16-alpine does not ship pgvector,
+# so the db service builds it from source -- see Dockerfile.postgres.
+pgvector

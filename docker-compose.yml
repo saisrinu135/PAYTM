@@ -1,0 +1,96 @@
+# Two services. No Redis, no MinIO, no pgAdmin -- Postgres holds session state
+# and the notification queue, and AUDIO_DIR is a mounted volume in dev.
+
+services:
+  db:
+    # postgres:16-alpine does not ship pgvector (only `cube`, which caps at 100
+    # dimensions and so cannot hold a 192-dim embedding). Built in-image on the
+    # SAME 16-alpine base, so the existing data directory needs no dump/restore
+    # and no REINDEX -- see Dockerfile.postgres for why not the Debian image.
+    build:
+      context: .
+      dockerfile: Dockerfile.postgres
+    image: paytm-postgres:16-pgvector
+    environment:
+      POSTGRES_DB: smb_agent
+      POSTGRES_USER: smb
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      # 15432 on the host, not 5432: this machine already runs a native Postgres
+      # on 5432 and a wslrelay on 5433, so host clients were hitting the wrong
+      # server. Inside the compose network api still connects to db:5432.
+      - "15432:5432"
+    healthcheck:
+      # Without this the api container starts before Postgres accepts
+      # connections and `alembic upgrade head` dies on first boot.
+      test: ["CMD-SHELL", "pg_isready -U smb -d smb_agent"]
+      interval: 3s
+      timeout: 3s
+      retries: 10
+      start_period: 5s
+
+  # Catches every outgoing email instead of delivering it. This is how you see
+  # the khata_entry / payment_receipt / due_reminder mails without sending real
+  # mail to a real customer -- which matters here, because those messages carry
+  # someone's outstanding balance.
+  #
+  # Mailpit rather than MailHog: MailHog has had no release since 2020. Mailpit
+  # is the maintained drop-in (same SMTP catcher + web UI). To use MailHog
+  # instead, change the image to `mailhog/mailhog:v1.0.1` -- the ports and env
+  # below are identical.
+  mail:
+    image: axllent/mailpit:latest
+    environment:
+      MP_SMTP_AUTH_ACCEPT_ANY: 1      # dev: take any credentials
+      MP_SMTP_AUTH_ALLOW_INSECURE: 1  # dev: no TLS required
+      MP_MAX_MESSAGES: 500
+    ports:
+      - "1025:1025"   # SMTP  -- what the app connects to
+      - "8025:8025"   # web UI -- open http://localhost:8025
+    healthcheck:
+      test: ["CMD", "/mailpit", "readyz"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  api:
+    build: .
+    env_file: .env
+    environment:
+      # Overrides the .env value, which points at localhost for host-side runs.
+      DATABASE_URL: postgresql+asyncpg://smb:${POSTGRES_PASSWORD}@db:5432/smb_agent
+      AUDIO_DIR: /srv/media
+      MODELS_DIR: /srv/models
+      # Same localhost-vs-service-name split as DATABASE_URL.
+      SMTP_HOST: mail
+      SMTP_PORT: "1025"
+    depends_on:
+      db:
+        condition: service_healthy
+      mail:
+        condition: service_started
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./app:/srv/app          # hot reload in dev
+      - ./alembic:/srv/alembic
+      - ./seeds:/srv/seeds
+      - ./media:/srv/media      # utterance audio (AUDIO_DIR)
+      - ./models:/srv/models:ro # silero_vad.onnx + ecapa.onnx
+    # ponytail: migrations run here. Fine for one replica -- move alembic to a
+    # one-shot init container or a deploy step before scaling out, or two
+    # replicas will race on the same migration.
+    command: >
+      sh -c "alembic upgrade head &&
+             uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload"
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://localhost:8000/healthz', timeout=3).status==200 else 1)\""]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+volumes:
+  pgdata:

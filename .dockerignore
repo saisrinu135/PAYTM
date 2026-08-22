@@ -1,0 +1,34 @@
+# The venv is Windows-built and hundreds of MB — copying it into a Linux image
+# both bloats the build context and produces binaries that cannot execute.
+.venv/
+venv/
+env/
+
+.git/
+.gitignore
+.dockerignore
+
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+
+# Runtime data — these are mounted volumes, never baked into the image.
+media/
+models/
+*.log
+
+# Secrets never enter an image layer.
+.env
+.env.*
+!.env.example
+
+# Editor / OS noise
+.vscode/
+.idea/
+Thumbs.db
+desktop.ini

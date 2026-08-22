@@ -1,0 +1,43 @@
+# Postgres 16 + pgvector, staying on Alpine deliberately.
+#
+# Why 16 and not 17: the existing data directory is a 16.13 cluster (verified
+# against the running container). Postgres does not upgrade a data directory in
+# place across major versions -- a 17 server refuses to start on a 16 cluster
+# with "database files are incompatible with server". Pinning 16 keeps the
+# volume, the schema and the seeded ledger exactly as they are.
+#
+# Why not the official pgvector/pgvector:pg16 image: it is Debian-based. Moving
+# an existing Alpine data directory onto it is a musl -> glibc jump, which
+# changes the libc collation provider -- Postgres logs a collation version
+# mismatch and text btree indexes built under musl can sort incorrectly, so
+# lookups may silently miss rows until a REINDEX DATABASE. Building onto the
+# image already in use avoids that entirely: same libc, same data directory, no
+# reindex, no dump/restore.
+#
+# Why compiled from source rather than `apk add postgresql-pgvector`: the Alpine
+# package targets a different PostgreSQL major and installs under paths this
+# image does not search. Building here uses the image's own pg_config, so the
+# extension is guaranteed ABI-correct for the server that loads it.
+FROM postgres:16-alpine
+
+ARG PGVECTOR_VERSION=v0.8.1
+
+# with_llvm=no skips JIT bitcode generation, which would otherwise require a
+# clang/llvm toolchain version-matched to the server build -- needless weight
+# for a marginal JIT gain on vector ops.
+# OPTFLAGS="" avoids -march=native, which would bake in CPU instructions
+# specific to the build machine and can crash on a different host.
+RUN apk add --no-cache --virtual .build-deps build-base git \
+    && git clone --branch ${PGVECTOR_VERSION} --depth 1 \
+         https://github.com/pgvector/pgvector.git /tmp/pgvector \
+    && cd /tmp/pgvector \
+    && make OPTFLAGS="" with_llvm=no \
+    && make install with_llvm=no \
+    && rm -rf /tmp/pgvector \
+    && apk del .build-deps
+
+# Fail the build here rather than at runtime if the .so did not land where the
+# server looks for it.
+RUN test -f "$(pg_config --pkglibdir)/vector.so" \
+    && test -f "$(pg_config --sharedir)/extension/vector.control" \
+    && echo "pgvector installed for PostgreSQL $(pg_config --version)"
