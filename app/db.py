@@ -10,6 +10,7 @@ from __future__ import annotations
 import hashlib
 import logging
 from collections.abc import AsyncIterator
+from datetime import UTC, datetime
 from typing import Annotated
 
 from fastapi import Depends, Header, HTTPException, status
@@ -23,7 +24,7 @@ from sqlalchemy.ext.asyncio import (
 
 from app.config import Settings, get_settings
 from app.log import store_id_var
-from app.models import Store
+from app.models import OwnerSession, Store
 
 log = logging.getLogger(__name__)
 
@@ -103,9 +104,19 @@ async def current_store(
             headers={"WWW-Authenticate": "Bearer"},
         )
     token = authorization.split(" ", 1)[1].strip()
+    digest = hash_token(token)
     store = await session.scalar(
-        select(Store).where(Store.api_token_hash == hash_token(token))
+        select(Store).where(Store.api_token_hash == digest)
     )
+    if store is None:
+        sess = await session.scalar(
+            select(OwnerSession).where(
+                OwnerSession.token_hash == digest,
+                OwnerSession.expires_at > datetime.now(UTC),
+            )
+        )
+        if sess is not None:
+            store = await session.get(Store, sess.store_id)
     if store is None:
         # Never echo the token, not even a prefix.
         log.warning("auth rejected: unknown token")

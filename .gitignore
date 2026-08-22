@@ -150,6 +150,11 @@ poetry.toml
 # LSP
 pyrightconfig.json
 
+# Frontend
+web/node_modules/
+web/dist/
+
+
 *.sage.py
 .pdm.toml
 profile_default/

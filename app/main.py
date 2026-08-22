@@ -14,6 +14,7 @@ from app import middleware
 from app.config import get_settings
 from app.db import dispose_engine, get_sessionmaker, init_engine
 from app.log import configure_logging
+from app.routers import auth, insights, khata, stores
 from app.services import notify
 
 log = logging.getLogger(__name__)
@@ -74,11 +75,10 @@ def create_app() -> FastAPI:
             await session.execute(text("SELECT 1"))
         return {"status": "ready", "db": "ok"}
 
-    # Routers are added in phases 1-5:
-    #   app.include_router(khata.router)
-    #   app.include_router(insights.router)
-    #   app.include_router(voice.router)
-    #   app.include_router(stores.router)
+    app.include_router(auth.router)
+    app.include_router(stores.router)
+    app.include_router(khata.router)
+    app.include_router(insights.router)
 
     return app
 

@@ -24,7 +24,14 @@ class Settings(BaseSettings):
     # NoDecode: without it pydantic-settings JSON-decodes list fields at the
     # source, before the validator below can split the comma-separated form
     # that a .env file / compose environment block actually carries.
-    cors_origins: Annotated[list[str], NoDecode] = Field(default_factory=list)
+    cors_origins: Annotated[list[str], NoDecode] = Field(
+        default_factory=lambda: ["http://localhost:5173"]
+    )
+
+    # Dummy OTP for the shopkeeper UI. Compared only when env=dev. Production
+    # must not accept it -- there is no SMS provider wired up yet.
+    dev_login_otp: str = "123456"
+    session_ttl_days: int = 7
 
     # ---- database -------------------------------------------------------
     database_url: str = "postgresql+asyncpg://smb:smb@localhost:5432/smb_agent"
@@ -90,6 +97,11 @@ class Settings(BaseSettings):
     @property
     def is_prod(self) -> bool:
         return self.env == "prod"
+
+    @property
+    def otp_login_enabled(self) -> bool:
+        """Dummy OTP is a dev concession. Prod waits on a real SMS vendor."""
+        return self.env == "dev"
 
 
 @lru_cache

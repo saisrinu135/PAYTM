@@ -102,6 +102,31 @@ class Store(Base):
     customers: Mapped[list[Customer]] = relationship(
         back_populates="store", cascade="all, delete-orphan"
     )
+    sessions: Mapped[list[OwnerSession]] = relationship(
+        back_populates="store", cascade="all, delete-orphan"
+    )
+
+
+class OwnerSession(Base):
+    """UI login session. The seed API token stays on stores.api_token_hash;
+    this is a separate bearer minted at OTP verify so the plaintext seed token
+    never has to be recovered.
+    """
+
+    __tablename__ = "owner_sessions"
+    __table_args__ = (
+        UniqueConstraint("token_hash", name="uq_owner_session_token"),
+        Index("ix_owner_sessions_store", "store_id"),
+        Index("ix_owner_sessions_expiry", "expires_at"),
+    )
+
+    id: Mapped[UUID] = _pk()
+    store_id: Mapped[UUID] = _fk("stores.id", ondelete="CASCADE")
+    token_hash: Mapped[str] = mapped_column(Text, nullable=False)
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    created_at: Mapped[datetime] = _now()
+
+    store: Mapped[Store] = relationship(back_populates="sessions")
 
 
 # ---- voiceprints: the owner, plus customers who opted in ------------------
