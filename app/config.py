@@ -46,6 +46,8 @@ class Settings(BaseSettings):
     # ---- Sarvam: STT / TTS / translate ----------------------------------
     sarvam_api_key: str = ""
     sarvam_base_url: str = "https://api.sarvam.ai"
+    # REST STT. saarika:v2.5 was retired; current default is saaras:v3.
+    sarvam_stt_model: str = "saaras:v3"
 
     # ---- voice ----------------------------------------------------------
     audio_dir: Path = Path("./media")

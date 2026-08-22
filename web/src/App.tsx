@@ -8,6 +8,7 @@ import { Home } from "./pages/Home";
 import { Insights } from "./pages/Insights";
 import { KhataList } from "./pages/KhataList";
 import { Login } from "./pages/Login";
+import { Translate } from "./pages/Translate";
 import { getToken } from "./api";
 
 export function App() {
@@ -21,6 +22,7 @@ export function App() {
         <Route element={<RequireAuth />}>
           <Route element={<Shell />}>
             <Route path="/" element={<Chat />} />
+            <Route path="/translate" element={<Translate />} />
             <Route path="/home" element={<Home />} />
             <Route path="/khata" element={<KhataList />} />
             <Route path="/khata/:mobile" element={<CustomerKhata />} />
